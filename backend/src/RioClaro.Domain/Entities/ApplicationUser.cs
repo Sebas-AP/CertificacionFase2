@@ -19,4 +19,5 @@ public sealed class ApplicationUser
     public string DisplayName { get; private set; } = string.Empty;
     public string Role { get; private set; } = string.Empty;
     public Organization Organization { get; private set; } = null!;
+    public ICollection<Invoice> UploadedInvoices { get; private set; } = new List<Invoice>();
 }

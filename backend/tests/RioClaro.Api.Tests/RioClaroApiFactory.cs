@@ -38,7 +38,6 @@ public sealed class RioClaroApiFactory : WebApplicationFactory<Program>
                 ["Frontend:Origin"] = _frontendOrigin
             });
         });
-
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<DbContextOptions<RioClaroDbContext>>();

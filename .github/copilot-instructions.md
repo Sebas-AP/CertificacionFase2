@@ -5,7 +5,7 @@ Construimos una plataforma web para procesar facturas, consultar información em
 ## Arquitectura acordada
 
 - Aplicación web en TypeScript, React y Next.js; los servicios REST del servidor son la única vía del navegador hacia Azure y los datos. Conserva las decisiones y dependencias existentes si el proyecto incorpora código.
-- Backend desplegado en Azure App Service Linux con Node.js 24 LTS y `npm start`, de acuerdo con `.github/agents/desplegador.agent.md`. Mantén disponible `GET /health`.
+- El backend REST existente está en `backend/` y usa ASP.NET Core 8; el frontend Next.js consume su API por HTTP. Para publicar, alinea el runtime de Azure App Service con el `TargetFramework` real y conserva `GET /health`; no uses `npm start` para el backend .NET.
 - Azure AI Foundry aloja los agentes de facturas, consulta empresarial y gerencial. Azure OpenAI aporta las capacidades conversacionales; Azure AI Search recupera contenido; Azure AI Document Intelligence extrae campos de facturas; Azure SQL conserva los datos de negocio.
 - No llames servicios Azure directamente desde el navegador. No agregues servicios, proveedores, frameworks o dependencias sin necesidad demostrable y sin reflejarlos en el plan y la configuración del proyecto.
 - Mantén separadas presentación, API/orquestación, integraciones Azure y acceso a datos. La interfaz no debe conocer detalles de SDK, credenciales ni consultas SQL.

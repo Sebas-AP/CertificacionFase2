@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using RioClaro.Application;
+using RioClaro.Application.Invoices;
+using RioClaro.Application.Inventory;
 using RioClaro.Infrastructure.Persistence;
 
 namespace RioClaro.Infrastructure;
@@ -25,6 +27,8 @@ public static class DependencyInjection
         });
         services.AddSingleton<ICurrentUserContext, DemoCurrentUserContext>();
         services.AddScoped<DemoDatabaseInitializer>();
+        services.AddScoped<IInventoryQueryService, InventoryQueryService>();
+        services.AddScoped<IInvoiceReviewService, InvoiceReviewService>();
 
         return services;
     }
