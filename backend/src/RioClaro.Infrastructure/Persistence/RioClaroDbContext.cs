@@ -68,6 +68,22 @@ public sealed class RioClaroDbContext(DbContextOptions<RioClaroDbContext> option
                     .HasConversion(new ValueConverter<DateTimeOffset, long>(
                         value => value.UtcTicks,
                         value => new DateTimeOffset(value, TimeSpan.Zero)));
+                entity.Property(invoice => invoice.RetainUntilUtc)
+                    .HasConversion(new ValueConverter<DateTimeOffset?, long?>(
+                        value => value.HasValue ? value.Value.UtcTicks : null,
+                        value => value.HasValue ? new DateTimeOffset(value.Value, TimeSpan.Zero) : null));
+                entity.Property(invoice => invoice.PdfDeletedAtUtc)
+                    .HasConversion(new ValueConverter<DateTimeOffset?, long?>(
+                        value => value.HasValue ? value.Value.UtcTicks : null,
+                        value => value.HasValue ? new DateTimeOffset(value.Value, TimeSpan.Zero) : null));
+                entity.Property(invoice => invoice.ExtractionStartedAtUtc)
+                    .HasConversion(new ValueConverter<DateTimeOffset?, long?>(
+                        value => value.HasValue ? value.Value.UtcTicks : null,
+                        value => value.HasValue ? new DateTimeOffset(value.Value, TimeSpan.Zero) : null));
+                entity.Property(invoice => invoice.ExtractionCompletedAtUtc)
+                    .HasConversion(new ValueConverter<DateTimeOffset?, long?>(
+                        value => value.HasValue ? value.Value.UtcTicks : null,
+                        value => value.HasValue ? new DateTimeOffset(value.Value, TimeSpan.Zero) : null));
             }
 
             entity.ToTable("Invoices");
@@ -80,9 +96,54 @@ public sealed class RioClaroDbContext(DbContextOptions<RioClaroDbContext> option
                 .HasConversion<int>();
             entity.Property(invoice => invoice.InvoiceNumber)
                 .HasMaxLength(100);
+            entity.Property(invoice => invoice.InvoiceNumberNormalized)
+                .HasMaxLength(100);
+            entity.Property(invoice => invoice.SupplierName)
+                .HasMaxLength(200);
+            entity.Property(invoice => invoice.SupplierTaxId)
+                .HasMaxLength(50);
+            entity.Property(invoice => invoice.SupplierTaxIdNormalized)
+                .HasMaxLength(50);
+            entity.Property(invoice => invoice.CustomerName)
+                .HasMaxLength(200);
+            entity.Property(invoice => invoice.CustomerTaxId)
+                .HasMaxLength(50);
+            entity.Property(invoice => invoice.PurchaseOrderNumber)
+                .HasMaxLength(100);
             entity.Property(invoice => invoice.CurrencyCode)
                 .HasMaxLength(3)
                 .IsUnicode(false);
+            entity.Property(invoice => invoice.OriginalFileName)
+                .HasMaxLength(255);
+            entity.Property(invoice => invoice.ContentType)
+                .HasMaxLength(100)
+                .IsUnicode(false);
+            entity.Property(invoice => invoice.Sha256)
+                .HasMaxLength(64)
+                .IsUnicode(false);
+            entity.Property(invoice => invoice.BlobETag)
+                .HasMaxLength(100);
+            entity.Property(invoice => invoice.LegalHold)
+                .HasDefaultValue(false);
+            entity.Property(invoice => invoice.LastExtractionErrorCode)
+                .HasMaxLength(100);
+            entity.HasIndex(invoice => new
+            {
+                invoice.LegalHold,
+                invoice.PdfDeletedAtUtc,
+                invoice.RetainUntilUtc
+            });
+            entity.Property(invoice => invoice.ExtractionStatus)
+                .HasConversion<int>();
+            entity.Property(invoice => invoice.FieldConfidenceJson)
+                .HasColumnType("nvarchar(max)")
+                .IsRequired();
+            entity.Property(invoice => invoice.ValidationWarningsJson)
+                .HasColumnType("nvarchar(max)")
+                .IsRequired();
+            entity.Property(invoice => invoice.ConcurrencyToken)
+                .ValueGeneratedNever()
+                .IsConcurrencyToken();
             entity.Property(invoice => invoice.Subtotal).HasPrecision(19, 4);
             entity.Property(invoice => invoice.TaxAmount).HasPrecision(19, 4);
             entity.Property(invoice => invoice.Total).HasPrecision(19, 4);
@@ -93,6 +154,17 @@ public sealed class RioClaroDbContext(DbContextOptions<RioClaroDbContext> option
                 invoice.UploadedAtUtc
             });
             entity.HasIndex(invoice => new { invoice.OrganizationId, invoice.InvoiceNumber });
+            entity.HasIndex(invoice => new { invoice.OrganizationId, invoice.Sha256 })
+                .IsUnique()
+                .HasFilter("[Sha256] IS NOT NULL");
+            entity.HasIndex(invoice => new
+            {
+                invoice.OrganizationId,
+                invoice.SupplierTaxIdNormalized,
+                invoice.InvoiceNumberNormalized,
+                invoice.IssueDate,
+                invoice.Total
+            });
             entity.HasOne(invoice => invoice.Organization)
                 .WithMany(organization => organization.Invoices)
                 .HasForeignKey(invoice => invoice.OrganizationId)
@@ -113,12 +185,14 @@ public sealed class RioClaroDbContext(DbContextOptions<RioClaroDbContext> option
         {
             entity.ToTable("InvoiceLines");
             entity.HasKey(line => line.Id);
+            entity.Property(line => line.Id).ValueGeneratedNever();
             entity.Property(line => line.Description)
                 .HasMaxLength(500)
                 .IsRequired();
             entity.Property(line => line.Quantity).HasPrecision(18, 4);
             entity.Property(line => line.UnitPrice).HasPrecision(19, 4);
             entity.Property(line => line.LineTotal).HasPrecision(19, 4);
+            entity.Property(line => line.Confidence).HasColumnType("float");
             entity.HasOne(line => line.Invoice)
                 .WithMany(invoice => invoice.Lines)
                 .HasForeignKey(line => new { line.OrganizationId, line.InvoiceId })

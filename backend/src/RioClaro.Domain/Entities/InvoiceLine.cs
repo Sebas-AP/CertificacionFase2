@@ -13,7 +13,8 @@ public sealed class InvoiceLine
         string description,
         decimal quantity,
         decimal unitPrice,
-        decimal lineTotal)
+        decimal lineTotal,
+        double? confidence = null)
     {
         Id = id;
         OrganizationId = organizationId;
@@ -22,6 +23,7 @@ public sealed class InvoiceLine
         Quantity = quantity;
         UnitPrice = unitPrice;
         LineTotal = lineTotal;
+        Confidence = confidence;
     }
 
     public Guid Id { get; private set; }
@@ -31,5 +33,6 @@ public sealed class InvoiceLine
     public decimal Quantity { get; private set; }
     public decimal UnitPrice { get; private set; }
     public decimal LineTotal { get; private set; }
+    public double? Confidence { get; private set; }
     public Invoice Invoice { get; private set; } = null!;
 }

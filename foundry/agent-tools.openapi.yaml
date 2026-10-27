@@ -1,0 +1,308 @@
+openapi: "3.0.3"
+info:
+  title: Río Claro read-only agent tools
+  version: "1.0.0"
+  description: Read-only, organization-scoped business data operations.
+servers:
+  - url: ${AGENT_TOOLS_BASE_URL}
+security:
+  - AgentToolBearer: []
+paths:
+  /api/agent-tools/v1/invoices:
+    get:
+      operationId: listInvoices
+      summary: List recent invoices for the server-selected demo organization
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 25
+      responses:
+        "200":
+          description: A bounded page of invoices.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InvoicePage"
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+  /api/agent-tools/v1/invoices/{invoiceId}:
+    get:
+      operationId: getInvoice
+      summary: Get sanitized, structured details for one invoice
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Structured invoice fields and review warnings.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Invoice"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+  /api/agent-tools/v1/invoices/{invoiceId}/duplicates:
+    get:
+      operationId: getInvoiceDuplicates
+      summary: Get exact duplicate evidence for one invoice
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Exact-file or exact-business duplicate evidence; no similarity score is inferred.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DuplicateMatches"
+        "401":
+          $ref: "#/components/responses/Problem"
+        "404":
+          $ref: "#/components/responses/Problem"
+  /api/agent-tools/v1/reports:
+    get:
+      operationId: getManagementReport
+      summary: Get organization-scoped aggregate business indicators
+      parameters:
+        - name: fromUtc
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: toUtc
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Indicators for the half-open UTC interval [fromUtc, toUtc).
+          content:
+            application/json:
+              schema:
+                type: object
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+  /api/agent-tools/v1/inventory:
+    get:
+      operationId: listInventory
+      summary: List current inventory quantities for the server-selected demo organization
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: pageSize
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 25
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+            maxLength: 100
+      responses:
+        "200":
+          description: A bounded current inventory page.
+          content:
+            application/json:
+              schema:
+                type: object
+        "400":
+          $ref: "#/components/responses/Problem"
+        "401":
+          $ref: "#/components/responses/Problem"
+  /api/agent-tools/v1/integrations/health:
+    get:
+      operationId: getIntegrationHealth
+      summary: Check whether configured agent and invoice integrations are reachable
+      responses:
+        "200":
+          description: Configuration status, without endpoints, credentials, or service identifiers.
+          content:
+            application/json:
+              schema:
+                type: object
+        "401":
+          $ref: "#/components/responses/Problem"
+components:
+  securitySchemes:
+    AgentToolBearer:
+      type: http
+      scheme: bearer
+      description: Server-generated AgentTools API key.
+  responses:
+    Problem:
+      description: A safe RFC 7807 problem response.
+      content:
+        application/problem+json:
+          schema:
+            type: object
+            properties:
+              type:
+                type: string
+              title:
+                type: string
+              status:
+                type: integer
+              code:
+                type: string
+              traceId:
+                type: string
+  schemas:
+    InvoicePage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/InvoiceSummary"
+        page:
+          type: integer
+        pageSize:
+          type: integer
+        totalItems:
+          type: integer
+        totalPages:
+          type: integer
+    InvoiceSummary:
+      type: object
+      properties:
+        invoiceId:
+          type: string
+          format: uuid
+        supplierName:
+          type: string
+          nullable: true
+        invoiceNumber:
+          type: string
+          nullable: true
+        invoiceDate:
+          type: string
+          format: date
+          nullable: true
+        total:
+          type: number
+          nullable: true
+        currencyCode:
+          type: string
+          nullable: true
+        status:
+          type: string
+    Invoice:
+      type: object
+      properties:
+        invoiceId:
+          type: string
+          format: uuid
+        supplierName:
+          type: string
+          nullable: true
+        supplierTaxId:
+          type: string
+          nullable: true
+          description: Never disclosed; the API returns null.
+        invoiceNumber:
+          type: string
+          nullable: true
+        invoiceDate:
+          type: string
+          format: date
+          nullable: true
+        currencyCode:
+          type: string
+          nullable: true
+        subtotal:
+          type: number
+          nullable: true
+        taxes:
+          type: number
+          nullable: true
+        total:
+          type: number
+          nullable: true
+        status:
+          type: string
+        fieldConfidence:
+          type: object
+          additionalProperties:
+            type: number
+            nullable: true
+        validationWarnings:
+          type: array
+          items:
+            type: string
+    DuplicateMatches:
+      type: object
+      properties:
+        invoiceId:
+          type: string
+          format: uuid
+        matches:
+          type: array
+          items:
+            type: object
+            properties:
+              invoiceId:
+                type: string
+                format: uuid
+              invoiceNumber:
+                type: string
+                nullable: true
+              invoiceDate:
+                type: string
+                format: date
+                nullable: true
+              total:
+                type: number
+                nullable: true
+              currencyCode:
+                type: string
+                nullable: true
+              matchType:
+                type: string
+              matchedRules:
+                type: array
+                items:
+                  type: string
+              score:
+                type: number
+                nullable: true
+        truncated:
+          type: boolean

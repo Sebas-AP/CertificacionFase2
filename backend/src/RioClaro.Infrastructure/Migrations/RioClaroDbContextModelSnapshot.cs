@@ -98,10 +98,50 @@ partial class RioClaroDbContextModelSnapshot : ModelSnapshot
                 .IsUnicode(false)
                 .HasColumnType("varchar(3)");
 
+            entity.Property<string>("ContentType")
+                .HasMaxLength(100)
+                .IsUnicode(false)
+                .HasColumnType("varchar(100)");
+
+            entity.Property<Guid>("ConcurrencyToken")
+                .IsConcurrencyToken()
+                .HasColumnType("uniqueidentifier");
+
+            entity.Property<string>("CustomerName")
+                .HasMaxLength(200)
+                .HasColumnType("nvarchar(200)");
+
+            entity.Property<string>("CustomerTaxId")
+                .HasMaxLength(50)
+                .HasColumnType("nvarchar(50)");
+
+            entity.Property<DateOnly?>("DueDate")
+                .HasColumnType("date");
+
             entity.Property<string>("DocumentStorageKey")
                 .IsRequired()
                 .HasMaxLength(512)
                 .HasColumnType("nvarchar(512)");
+
+            entity.Property<DateTimeOffset?>("ExtractionCompletedAtUtc")
+                .HasColumnType("datetimeoffset");
+
+            entity.Property<int>("ExtractionAttemptCount")
+                .HasColumnType("int");
+
+            entity.Property<int>("ExtractionStatus")
+                .HasColumnType("int");
+
+            entity.Property<DateTimeOffset?>("ExtractionStartedAtUtc")
+                .HasColumnType("datetimeoffset");
+
+            entity.Property<string>("FieldConfidenceJson")
+                .IsRequired()
+                .HasColumnType("nvarchar(max)");
+
+            entity.Property<string>("InvoiceNumberNormalized")
+                .HasMaxLength(100)
+                .HasColumnType("nvarchar(100)");
 
             entity.Property<Guid?>("SupplierId")
                 .HasColumnType("uniqueidentifier");
@@ -110,11 +150,64 @@ partial class RioClaroDbContextModelSnapshot : ModelSnapshot
                 .HasMaxLength(100)
                 .HasColumnType("nvarchar(100)");
 
+            entity.Property<Guid?>("DuplicateOfInvoiceId")
+                .HasColumnType("uniqueidentifier");
+
+            entity.Property<string>("LastExtractionErrorCode")
+                .HasMaxLength(100)
+                .HasColumnType("nvarchar(100)");
+
+            entity.Property<bool>("LegalHold")
+                .ValueGeneratedOnAdd()
+                .HasColumnType("bit")
+                .HasDefaultValue(false);
+
             entity.Property<DateOnly?>("IssueDate")
                 .HasColumnType("date");
 
+            entity.Property<string>("OriginalFileName")
+                .HasMaxLength(255)
+                .HasColumnType("nvarchar(255)");
+
             entity.Property<Guid>("OrganizationId")
                 .HasColumnType("uniqueidentifier");
+
+            entity.Property<int>("PageCount")
+                .HasColumnType("int");
+
+            entity.Property<string>("PurchaseOrderNumber")
+                .HasMaxLength(100)
+                .HasColumnType("nvarchar(100)");
+
+            entity.Property<DateTimeOffset?>("PdfDeletedAtUtc")
+                .HasColumnType("datetimeoffset");
+
+            entity.Property<DateTimeOffset?>("RetainUntilUtc")
+                .HasColumnType("datetimeoffset");
+
+            entity.Property<string>("Sha256")
+                .HasMaxLength(64)
+                .IsUnicode(false)
+                .HasColumnType("varchar(64)");
+
+            entity.Property<long>("SizeBytes")
+                .HasColumnType("bigint");
+
+            entity.Property<string>("BlobETag")
+                .HasMaxLength(100)
+                .HasColumnType("nvarchar(100)");
+
+            entity.Property<string>("SupplierName")
+                .HasMaxLength(200)
+                .HasColumnType("nvarchar(200)");
+
+            entity.Property<string>("SupplierTaxId")
+                .HasMaxLength(50)
+                .HasColumnType("nvarchar(50)");
+
+            entity.Property<string>("SupplierTaxIdNormalized")
+                .HasMaxLength(50)
+                .HasColumnType("nvarchar(50)");
 
             entity.Property<decimal?>("Subtotal")
                 .HasPrecision(19, 4)
@@ -131,6 +224,10 @@ partial class RioClaroDbContextModelSnapshot : ModelSnapshot
             entity.Property<int>("Status")
                 .HasColumnType("int");
 
+            entity.Property<string>("ValidationWarningsJson")
+                .IsRequired()
+                .HasColumnType("nvarchar(max)");
+
             entity.Property<DateTimeOffset>("UploadedAtUtc")
                 .HasColumnType("datetimeoffset");
 
@@ -143,6 +240,19 @@ partial class RioClaroDbContextModelSnapshot : ModelSnapshot
 
             entity.HasIndex("OrganizationId", "InvoiceNumber");
 
+            entity.HasIndex("OrganizationId", "Sha256")
+                .IsUnique()
+                .HasFilter("[Sha256] IS NOT NULL");
+
+            entity.HasIndex(
+                "OrganizationId",
+                "SupplierTaxIdNormalized",
+                "InvoiceNumberNormalized",
+                "IssueDate",
+                "Total");
+
+            entity.HasIndex("LegalHold", "PdfDeletedAtUtc", "RetainUntilUtc");
+
             entity.HasIndex("OrganizationId", "Status", "UploadedAtUtc");
 
             entity.HasIndex("OrganizationId", "SupplierId");
@@ -154,8 +264,11 @@ partial class RioClaroDbContextModelSnapshot : ModelSnapshot
 
         modelBuilder.Entity("RioClaro.Domain.Entities.InvoiceLine", entity =>
         {
+            entity.Property<double?>("Confidence")
+                .HasColumnType("float");
+
             entity.Property<Guid>("Id")
-                .ValueGeneratedOnAdd()
+                .ValueGeneratedNever()
                 .HasColumnType("uniqueidentifier");
 
             entity.Property<string>("Description")

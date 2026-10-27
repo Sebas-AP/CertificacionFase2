@@ -25,43 +25,25 @@ public sealed class InvoiceReviewService(RioClaroDbContext dbContext) : IInvoice
                 "pending_review" => InvoiceStatus.PendingReview,
                 "approved" => InvoiceStatus.Approved,
                 "extraction_failed" => InvoiceStatus.ExtractionFailed,
+                "extracted" => InvoiceStatus.Extracted,
+                "needs_validation" => InvoiceStatus.NeedsValidation,
+                "duplicate" => InvoiceStatus.Duplicate,
                 _ => throw new ArgumentException("Unsupported invoice status.", nameof(status))
             };
             query = query.Where(invoice => invoice.Status == parsedStatus);
         }
 
         var totalItems = await query.CountAsync(cancellationToken);
-        var invoices = await query
+        var entities = await query
+            .Include(invoice => invoice.Lines)
             .OrderByDescending(invoice => invoice.UploadedAtUtc)
             .ThenBy(invoice => invoice.Id)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(invoice => new InvoiceResponse(
-                invoice.Id,
-                invoice.SupplierId,
-                invoice.InvoiceNumber,
-                invoice.IssueDate,
-                invoice.CurrencyCode,
-                invoice.Subtotal,
-                invoice.TaxAmount,
-                invoice.Total,
-                invoice.Status == InvoiceStatus.PendingReview
-                    ? "pending_review"
-                    : invoice.Status == InvoiceStatus.Approved
-                        ? "approved"
-                        : "extraction_failed",
-                invoice.UploadedAtUtc,
-                invoice.Lines
-                    .OrderBy(line => line.Id)
-                    .Select(line => new InvoiceLineResponse(
-                        line.Id,
-                        line.Description,
-                        line.Quantity,
-                        line.UnitPrice,
-                        line.LineTotal))
-                    .ToList(),
-                new List<InvoiceReviewHistoryResponse>()))
             .ToListAsync(cancellationToken);
+        var invoices = entities
+            .Select(invoice => InvoiceResponseMapper.Map(invoice, includeReviewHistory: false))
+            .ToList();
 
         return new InvoicePageResponse(
             invoices,
@@ -71,46 +53,20 @@ public sealed class InvoiceReviewService(RioClaroDbContext dbContext) : IInvoice
             totalItems == 0 ? 0 : (int)Math.Ceiling(totalItems / (double)pageSize));
     }
 
-    public Task<InvoiceResponse?> GetByIdAsync(
+    public async Task<InvoiceResponse?> GetByIdAsync(
         Guid organizationId,
         Guid invoiceId,
-        CancellationToken cancellationToken = default) =>
-        dbContext.Invoices
+        CancellationToken cancellationToken = default)
+    {
+        var invoice = await dbContext.Invoices
             .AsNoTracking()
-            .Where(invoice => invoice.OrganizationId == organizationId && invoice.Id == invoiceId)
-            .Select(invoice => new InvoiceResponse(
-                invoice.Id,
-                invoice.SupplierId,
-                invoice.InvoiceNumber,
-                invoice.IssueDate,
-                invoice.CurrencyCode,
-                invoice.Subtotal,
-                invoice.TaxAmount,
-                invoice.Total,
-                invoice.Status == InvoiceStatus.PendingReview
-                    ? "pending_review"
-                    : invoice.Status == InvoiceStatus.Approved
-                        ? "approved"
-                        : "extraction_failed",
-                invoice.UploadedAtUtc,
-                invoice.Lines
-                    .OrderBy(line => line.Id)
-                    .Select(line => new InvoiceLineResponse(
-                        line.Id,
-                        line.Description,
-                        line.Quantity,
-                        line.UnitPrice,
-                        line.LineTotal))
-                    .ToList(),
-                invoice.ReviewHistory
-                    .OrderByDescending(history => history.OccurredAtUtc)
-                    .Select(history => new InvoiceReviewHistoryResponse(
-                        history.Action,
-                        history.DetailsJson,
-                        history.OccurredAtUtc,
-                        history.PerformedByUserId))
-                    .ToList()))
-            .SingleOrDefaultAsync(cancellationToken);
+            .Include(item => item.Lines)
+            .Include(item => item.ReviewHistory)
+            .SingleOrDefaultAsync(
+                item => item.OrganizationId == organizationId && item.Id == invoiceId,
+                cancellationToken);
+        return invoice is null ? null : InvoiceResponseMapper.Map(invoice);
+    }
 
     public async Task<InvoiceActionResult> ReviewAsync(
         Guid organizationId,
@@ -137,7 +93,8 @@ public sealed class InvoiceReviewService(RioClaroDbContext dbContext) : IInvoice
         if (invoice.TaxAmount != request.TaxAmount) changedFields.Add("taxAmount");
         if (invoice.Total != request.Total) changedFields.Add("total");
 
-        if (invoice.Status != InvoiceStatus.PendingReview)
+        if (invoice.Status is not (InvoiceStatus.PendingReview or
+            InvoiceStatus.Extracted or InvoiceStatus.NeedsValidation))
         {
             return new InvoiceActionResult(
                 null,

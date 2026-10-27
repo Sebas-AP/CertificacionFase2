@@ -178,7 +178,7 @@ public sealed class DemoContextTests
     }
 
     [Fact]
-    public async Task SwaggerDoesNotDeclareBearerAuthentication()
+    public async Task SwaggerDeclaresBearerAuthenticationOnlyForAgentTools()
     {
         await using var factory = new RioClaroApiFactory();
         using var client = factory.CreateClient();
@@ -189,15 +189,19 @@ public sealed class DemoContextTests
         using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         var root = json.RootElement;
         Assert.False(root.TryGetProperty("security", out _));
-        Assert.False(root.GetProperty("components")
-            .TryGetProperty("securitySchemes", out _));
+        Assert.True(root.GetProperty("components")
+            .GetProperty("securitySchemes")
+            .TryGetProperty("AgentToolBearer", out _));
 
         foreach (var path in root.GetProperty("paths").EnumerateObject())
         {
             foreach (var operation in path.Value.EnumerateObject())
             {
-                Assert.False(operation.Value.TryGetProperty("security", out _),
-                    $"OpenAPI operation {operation.Name} {path.Name} must not require security.");
+                var requiresAgentToolKey =
+                    path.Name.StartsWith("/api/agent-tools/v1/", StringComparison.Ordinal);
+                Assert.Equal(
+                    requiresAgentToolKey,
+                    operation.Value.TryGetProperty("security", out _));
             }
         }
 

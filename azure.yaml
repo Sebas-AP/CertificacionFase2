@@ -1,0 +1,44 @@
+name: rio-claro-foundry-agents
+
+infra:
+  provider: microsoft.foundry
+
+services:
+  ai-project:
+    host: azure.ai.project
+
+  agent-tools-auth:
+    host: azure.ai.connection
+    name: rio-claro-agent-tools-auth
+    uses:
+      - ai-project
+    category: RemoteTool
+    target: ${AGENT_TOOLS_BASE_URL}
+    authType: CustomKeys
+    credentials:
+      Authorization: "Bearer ${AGENT_TOOLS_API_KEY}"
+    env:
+      AGENT_TOOLS_BASE_URL: ${AGENT_TOOLS_BASE_URL}
+      AGENT_TOOLS_API_KEY: ${AGENT_TOOLS_API_KEY}
+
+  business-agent:
+    host: azure.ai.agent
+    project: .
+    $ref: ./foundry/agents/business.agent.yaml
+    uses:
+      - ai-project
+      - agent-tools-auth
+    connections:
+      - agent-tools-auth
+    env:
+      AZURE_AI_MODEL_DEPLOYMENT_NAME: ${AZURE_AI_MODEL_DEPLOYMENT_NAME}
+      AGENT_TOOLS_BASE_URL: ${AGENT_TOOLS_BASE_URL}
+
+  invoice-agent:
+    host: azure.ai.agent
+    project: .
+    $ref: ./foundry/agents/invoice.agent.yaml
+    uses:
+      - ai-project
+    env:
+      AZURE_AI_MODEL_DEPLOYMENT_NAME: ${AZURE_AI_MODEL_DEPLOYMENT_NAME}

@@ -5,7 +5,8 @@ public sealed record InvoiceLineResponse(
     string Description,
     decimal Quantity,
     decimal UnitPrice,
-    decimal LineTotal);
+    decimal LineTotal,
+    double? Confidence);
 
 public sealed record InvoiceReviewHistoryResponse(
     string Action,
@@ -25,7 +26,20 @@ public sealed record InvoiceResponse(
     string Status,
     DateTimeOffset UploadedAtUtc,
     IReadOnlyList<InvoiceLineResponse> Lines,
-    IReadOnlyList<InvoiceReviewHistoryResponse> ReviewHistory);
+    IReadOnlyList<InvoiceReviewHistoryResponse> ReviewHistory,
+    string? SupplierName = null,
+    string? SupplierTaxId = null,
+    string? CustomerName = null,
+    string? CustomerTaxId = null,
+    DateOnly? DueDate = null,
+    string? PurchaseOrderNumber = null,
+    string? ExtractionStatus = null,
+    int ExtractionAttemptCount = 0,
+    string? LastExtractionErrorCode = null,
+    DateTimeOffset? ExtractionCompletedAtUtc = null,
+    IReadOnlyDictionary<string, double?>? FieldConfidence = null,
+    IReadOnlyList<string>? ValidationWarnings = null,
+    Guid? DuplicateOfInvoiceId = null);
 
 public sealed record InvoicePageResponse(
     IReadOnlyList<InvoiceResponse> Items,
