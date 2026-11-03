@@ -85,24 +85,25 @@ esto no sustituye autenticación de producción. El cliente/agente no puede
 elegir `OrganizationId` ni `UserId`. Consulta contratos, errores y parámetros en
 [docs/api-contracts.md](./docs/api-contracts.md).
 
-| Método | Ruta | Comportamiento |
-|---|---|---|
-| `GET` | `/health` | Estado mínimo del proceso; no consulta dependencias. |
-| `GET` | `/api/context` | Contexto fijo de demostración. |
-| `GET` | `/api/facturas` | Historial paginado, filtrado por estado. |
-| `GET` | `/api/facturas/{invoiceId}` | Detalle y auditoría de revisión. |
-| `POST` | `/api/invoices/upload` | Valida, deduplica, guarda y analiza PDF. |
-| `POST` | `/api/invoices/{invoiceId}/retry-extraction` | Reintenta con el Blob original; máximo tres intentos. |
-| `PUT` | `/api/facturas/{invoiceId}/revision` | Corrige campos pendientes. |
-| `POST` | `/api/facturas/{invoiceId}/confirmacion` | Aprueba una factura revisada. |
-| `GET` | `/api/inventario` | Inventario paginado de SQL. |
-| `GET` | `/api/inventario/{productId}` | Detalle de producto e inventario. |
-| `GET` | `/api/reportes?fromUtc=&toUtc=` | KPIs desde SQL para un periodo semiabierto. |
-| `POST` | `/api/chat` | Invoca `rio-claro-business-agent`; fallos de configuración/proveedor se devuelven con ProblemDetails. |
-| `POST` | `/api/invoices/{invoiceId}/explain` | Explica campos y advertencias de una factura, sin modificarla. |
-| `GET` | `/api/agents/health` | Verifica las versiones configuradas de Foundry. |
-| `GET` | `/api/agent-tools/v1/*` | Herramientas GET protegidas para Foundry; se limitan a la organización del servidor. |
-| `POST` | `/api/admin/retention/run` | Ejecuta limpieza manual solo en modo Demo. No exponer fuera de la demostración. |
+| Método  | Ruta                                           | Comportamiento                                                                                           |
+| -------- | ---------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `GET`  | `/health`                                    | Estado mínimo del proceso; no consulta dependencias.                                                    |
+| `GET`  | `/api/context`                               | Contexto fijo de demostración.                                                                          |
+| `GET`  | `/api/facturas`                              | Historial paginado, filtrado por estado.                                                                 |
+| `GET`  | `/api/facturas/{invoiceId}`                  | Detalle y auditoría de revisión.                                                                       |
+| `POST` | `/api/invoices/upload`                       | Valida, deduplica, guarda y analiza PDF.                                                                 |
+| `POST` | `/api/invoices/{invoiceId}/retry-extraction` | Reintenta con el Blob original; máximo tres intentos.                                                   |
+| `PUT`  | `/api/facturas/{invoiceId}/revision`         | Corrige campos pendientes.                                                                               |
+| `POST` | `/api/facturas/{invoiceId}/confirmacion`     | Aprueba una factura revisada.                                                                            |
+| `GET`  | `/api/inventario`                            | Inventario paginado de SQL.                                                                              |
+| `GET`  | `/api/inventario/{productId}`                | Detalle de producto e inventario.                                                                        |
+| `GET`  | `/api/reportes?fromUtc=&toUtc=`              | KPIs desde SQL para un periodo semiabierto.                                                              |
+| `POST` | `/api/chat`                                  | Invoca `rio-claro-business-agent`; fallos de configuración/proveedor se devuelven con ProblemDetails. |
+| `POST` | `/api/invoices/{invoiceId}/explain`          | Explica campos y advertencias de una factura, sin modificarla.                                           |
+| `GET`  | `/api/agents/health`                         | Verifica las versiones configuradas de Foundry.                                                          |
+| `GET`  | `/api/agent-tools/v1/*`                      | Herramientas GET protegidas para Foundry; se limitan a la organización del servidor.                    |
+| `POST` | `/api/admin/retention/run`                   | Ejecuta limpieza manual solo en modo Demo. No exponer fuera de la demostración.                         |
+| `GET`  | `/swagger`                                   | OpenAPI sin esquema de autenticación.                                                                    |
 
 ## Agentes Microsoft Foundry
 
@@ -125,7 +126,6 @@ versión que muestra `azd ai agent show`. Para eliminación, fija
 `RIO_CLARO_AZD_ENVIRONMENT` al entorno exacto y ejecuta
 `./scripts/cleanup-foundry-demo.sh`; se pide una confirmación escrita y no se
 usa purga de recursos recuperables.
-| `GET` | `/swagger` | OpenAPI sin esquema de autenticación. |
 
 `POST /api/login` y las escrituras de inventario permanecen ausentes: no se
 simula autenticación ni se habilitan cambios sin permisos y auditoría acordados.

@@ -1,3 +1,5 @@
+using Microsoft.Extensions.Options;
+
 namespace RioClaro.Infrastructure.Agents;
 
 public sealed class FoundryOptions
@@ -30,4 +32,14 @@ public sealed class FoundryOptions
     public bool HasValidLimits =>
         RequestTimeoutSeconds is >= 1 and <= 120 &&
         MaxResponseCharacters is >= 1 and <= 16_000;
+}
+
+public sealed class FoundryOptionsValidator : IValidateOptions<FoundryOptions>
+{
+    public ValidateOptionsResult Validate(string? name, FoundryOptions options) =>
+        options.HasValidLimits
+            ? ValidateOptionsResult.Success
+            : ValidateOptionsResult.Fail(
+                "Foundry:RequestTimeoutSeconds debe estar entre 1 y 120, y " +
+                "Foundry:MaxResponseCharacters debe estar entre 1 y 16000.");
 }

@@ -33,6 +33,9 @@ public partial class InitialDemoSchema : Migration
             constraints: table =>
             {
                 table.PrimaryKey("PK_Users", user => user.Id);
+                table.UniqueConstraint(
+                    "AK_Users_OrganizationId_Id",
+                    user => new { user.OrganizationId, user.Id });
                 table.ForeignKey(
                     name: "FK_Users_Organizations_OrganizationId",
                     column: user => user.OrganizationId,

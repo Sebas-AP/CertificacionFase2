@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using RioClaro.Application;
 using RioClaro.Application.Agents;
 using RioClaro.Application.Invoices;
@@ -38,6 +39,7 @@ public static class DependencyInjection
         services.AddScoped<IInvoiceDocumentExtractor, AzureInvoiceDocumentExtractor>();
         services.AddScoped<IInvoiceUploadService, InvoiceUploadService>();
         services.AddScoped<IInvoiceRetentionService, InvoiceRetentionService>();
+        services.AddSingleton<IValidateOptions<FoundryOptions>, FoundryOptionsValidator>();
         services.AddOptions<FoundryOptions>()
             .Configure<IConfiguration>((options, configuration) =>
             {
@@ -62,7 +64,8 @@ public static class DependencyInjection
                 {
                     options.MaxResponseCharacters = maxResponseCharacters;
                 }
-            });
+            })
+            .ValidateOnStart();
         services.AddScoped<IFoundryAgentInvoker, FoundryAgentInvoker>();
         services.AddScoped<IFoundryAgentVersionProbe, FoundryAgentVersionProbe>();
         services.AddScoped<IBusinessAgentClient, FoundryBusinessAgentClient>();

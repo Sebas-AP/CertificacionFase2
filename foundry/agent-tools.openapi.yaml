@@ -34,11 +34,76 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/InvoicePage"
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        invoiceId:
+                          type: string
+                          format: uuid
+                        supplierName:
+                          type: string
+                          nullable: true
+                        invoiceNumber:
+                          type: string
+                          nullable: true
+                        invoiceDate:
+                          type: string
+                          format: date
+                          nullable: true
+                        total:
+                          type: number
+                          nullable: true
+                        currencyCode:
+                          type: string
+                          nullable: true
+                        status:
+                          type: string
+                  page:
+                    type: integer
+                  pageSize:
+                    type: integer
+                  totalItems:
+                    type: integer
+                  totalPages:
+                    type: integer
         "400":
-          $ref: "#/components/responses/Problem"
+          description: A safe RFC 7807 problem response.
+          content:
+            application/problem+json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  title:
+                    type: string
+                  status:
+                    type: integer
+                  code:
+                    type: string
+                  traceId:
+                    type: string
         "401":
-          $ref: "#/components/responses/Problem"
+          description: A safe RFC 7807 problem response.
+          content:
+            application/problem+json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  title:
+                    type: string
+                  status:
+                    type: integer
+                  code:
+                    type: string
+                  traceId:
+                    type: string
   /api/agent-tools/v1/invoices/{invoiceId}:
     get:
       operationId: getInvoice
@@ -56,11 +121,82 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Invoice"
+                type: object
+                properties:
+                  invoiceId:
+                    type: string
+                    format: uuid
+                  supplierName:
+                    type: string
+                    nullable: true
+                  supplierTaxId:
+                    type: string
+                    nullable: true
+                    description: Never disclosed; the API returns null.
+                  invoiceNumber:
+                    type: string
+                    nullable: true
+                  invoiceDate:
+                    type: string
+                    format: date
+                    nullable: true
+                  currencyCode:
+                    type: string
+                    nullable: true
+                  subtotal:
+                    type: number
+                    nullable: true
+                  taxes:
+                    type: number
+                    nullable: true
+                  total:
+                    type: number
+                    nullable: true
+                  status:
+                    type: string
+                  fieldConfidence:
+                    type: object
+                    additionalProperties:
+                      type: number
+                      nullable: true
+                  validationWarnings:
+                    type: array
+                    items:
+                      type: string
         "401":
-          $ref: "#/components/responses/Problem"
+          description: A safe RFC 7807 problem response.
+          content:
+            application/problem+json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  title:
+                    type: string
+                  status:
+                    type: integer
+                  code:
+                    type: string
+                  traceId:
+                    type: string
         "404":
-          $ref: "#/components/responses/Problem"
+          description: A safe RFC 7807 problem response.
+          content:
+            application/problem+json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  title:
+                    type: string
+                  status:
+                    type: integer
+                  code:
+                    type: string
+                  traceId:
+                    type: string
   /api/agent-tools/v1/invoices/{invoiceId}/duplicates:
     get:
       operationId: getInvoiceDuplicates
@@ -78,11 +214,77 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DuplicateMatches"
+                type: object
+                properties:
+                  invoiceId:
+                    type: string
+                    format: uuid
+                  matches:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        invoiceId:
+                          type: string
+                          format: uuid
+                        invoiceNumber:
+                          type: string
+                          nullable: true
+                        invoiceDate:
+                          type: string
+                          format: date
+                          nullable: true
+                        total:
+                          type: number
+                          nullable: true
+                        currencyCode:
+                          type: string
+                          nullable: true
+                        matchType:
+                          type: string
+                        matchedRules:
+                          type: array
+                          items:
+                            type: string
+                        score:
+                          type: number
+                          nullable: true
+                  truncated:
+                    type: boolean
         "401":
-          $ref: "#/components/responses/Problem"
+          description: A safe RFC 7807 problem response.
+          content:
+            application/problem+json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  title:
+                    type: string
+                  status:
+                    type: integer
+                  code:
+                    type: string
+                  traceId:
+                    type: string
         "404":
-          $ref: "#/components/responses/Problem"
+          description: A safe RFC 7807 problem response.
+          content:
+            application/problem+json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  title:
+                    type: string
+                  status:
+                    type: integer
+                  code:
+                    type: string
+                  traceId:
+                    type: string
   /api/agent-tools/v1/reports:
     get:
       operationId: getManagementReport
@@ -108,9 +310,39 @@ paths:
               schema:
                 type: object
         "400":
-          $ref: "#/components/responses/Problem"
+          description: A safe RFC 7807 problem response.
+          content:
+            application/problem+json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  title:
+                    type: string
+                  status:
+                    type: integer
+                  code:
+                    type: string
+                  traceId:
+                    type: string
         "401":
-          $ref: "#/components/responses/Problem"
+          description: A safe RFC 7807 problem response.
+          content:
+            application/problem+json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  title:
+                    type: string
+                  status:
+                    type: integer
+                  code:
+                    type: string
+                  traceId:
+                    type: string
   /api/agent-tools/v1/inventory:
     get:
       operationId: listInventory
@@ -145,9 +377,39 @@ paths:
               schema:
                 type: object
         "400":
-          $ref: "#/components/responses/Problem"
+          description: A safe RFC 7807 problem response.
+          content:
+            application/problem+json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  title:
+                    type: string
+                  status:
+                    type: integer
+                  code:
+                    type: string
+                  traceId:
+                    type: string
         "401":
-          $ref: "#/components/responses/Problem"
+          description: A safe RFC 7807 problem response.
+          content:
+            application/problem+json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  title:
+                    type: string
+                  status:
+                    type: integer
+                  code:
+                    type: string
+                  traceId:
+                    type: string
   /api/agent-tools/v1/integrations/health:
     get:
       operationId: getIntegrationHealth
@@ -160,149 +422,25 @@ paths:
               schema:
                 type: object
         "401":
-          $ref: "#/components/responses/Problem"
+          description: A safe RFC 7807 problem response.
+          content:
+            application/problem+json:
+              schema:
+                type: object
+                properties:
+                  type:
+                    type: string
+                  title:
+                    type: string
+                  status:
+                    type: integer
+                  code:
+                    type: string
+                  traceId:
+                    type: string
 components:
   securitySchemes:
     AgentToolBearer:
       type: http
       scheme: bearer
       description: Server-generated AgentTools API key.
-  responses:
-    Problem:
-      description: A safe RFC 7807 problem response.
-      content:
-        application/problem+json:
-          schema:
-            type: object
-            properties:
-              type:
-                type: string
-              title:
-                type: string
-              status:
-                type: integer
-              code:
-                type: string
-              traceId:
-                type: string
-  schemas:
-    InvoicePage:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: "#/components/schemas/InvoiceSummary"
-        page:
-          type: integer
-        pageSize:
-          type: integer
-        totalItems:
-          type: integer
-        totalPages:
-          type: integer
-    InvoiceSummary:
-      type: object
-      properties:
-        invoiceId:
-          type: string
-          format: uuid
-        supplierName:
-          type: string
-          nullable: true
-        invoiceNumber:
-          type: string
-          nullable: true
-        invoiceDate:
-          type: string
-          format: date
-          nullable: true
-        total:
-          type: number
-          nullable: true
-        currencyCode:
-          type: string
-          nullable: true
-        status:
-          type: string
-    Invoice:
-      type: object
-      properties:
-        invoiceId:
-          type: string
-          format: uuid
-        supplierName:
-          type: string
-          nullable: true
-        supplierTaxId:
-          type: string
-          nullable: true
-          description: Never disclosed; the API returns null.
-        invoiceNumber:
-          type: string
-          nullable: true
-        invoiceDate:
-          type: string
-          format: date
-          nullable: true
-        currencyCode:
-          type: string
-          nullable: true
-        subtotal:
-          type: number
-          nullable: true
-        taxes:
-          type: number
-          nullable: true
-        total:
-          type: number
-          nullable: true
-        status:
-          type: string
-        fieldConfidence:
-          type: object
-          additionalProperties:
-            type: number
-            nullable: true
-        validationWarnings:
-          type: array
-          items:
-            type: string
-    DuplicateMatches:
-      type: object
-      properties:
-        invoiceId:
-          type: string
-          format: uuid
-        matches:
-          type: array
-          items:
-            type: object
-            properties:
-              invoiceId:
-                type: string
-                format: uuid
-              invoiceNumber:
-                type: string
-                nullable: true
-              invoiceDate:
-                type: string
-                format: date
-                nullable: true
-              total:
-                type: number
-                nullable: true
-              currencyCode:
-                type: string
-                nullable: true
-              matchType:
-                type: string
-              matchedRules:
-                type: array
-                items:
-                  type: string
-              score:
-                type: number
-                nullable: true
-        truncated:
-          type: boolean

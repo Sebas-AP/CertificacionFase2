@@ -27,8 +27,13 @@ public sealed class PdfUploadOptions
         {
             failure = "PdfUpload:RetentionDays debe ser exactamente 60.";
         }
-        else if (AllowedContentTypes is not { Length: 1 } allowedContentTypes ||
-                 !string.Equals(allowedContentTypes[0], "application/pdf", StringComparison.OrdinalIgnoreCase))
+        // El binder de IConfiguration fusiona arrays por índice contra el valor
+        // default no vacío de AllowedContentTypes, por lo que un único valor
+        // configurado puede terminar duplicado (ver PdfUploadOptionsTests).
+        // Por eso se exige Length > 0 en vez de Length == 1.
+        else if (AllowedContentTypes is not { Length: > 0 } allowedContentTypes ||
+                 allowedContentTypes.Any(contentType =>
+                     !string.Equals(contentType, "application/pdf", StringComparison.OrdinalIgnoreCase)))
         {
             failure = "PdfUpload:AllowedContentTypes solo puede contener application/pdf.";
         }
