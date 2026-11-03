@@ -19,7 +19,7 @@ Construimos una plataforma web para procesar facturas, consultar información em
 
 ## Superficies funcionales y contrato mínimo
 
-Implementa y documenta estas rutas bajo `/api`: `login`, `facturas`, `chat`, `reportes` e `inventario`. Define métodos HTTP, parámetros, esquemas de petición/respuesta, permisos y errores antes de conectar cada pantalla. Usa JSON consistente, códigos HTTP correctos, validación de entrada, límites de tamaño y paginación donde corresponda. No devuelvas trazas, secretos ni errores internos al cliente.
+![1793663129373](image/copilot-instructions/1793663129373.png)
 
 El producto cubre:
 
