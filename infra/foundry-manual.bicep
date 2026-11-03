@@ -1,7 +1,12 @@
-param location string = 'centralus'
+// Usa la MISMA región que el App Service del backend (appServiceLocation en main.bicep):
+// la llamada de la herramienta OpenAPI del agente hacia el backend es sensible a la
+// latencia entre regiones y puede fallar intermitentemente si quedan en regiones distintas.
+param location string = 'canadacentral'
 param accountName string = 'rioclarofoundry01'
 param projectName string = 'rioclaro-project'
 param modelDeploymentName string = 'gpt-5-mini'
+param modelName string = 'gpt-5-mini'
+param modelVersion string = '2025-08-07'
 param agentToolsBaseUrl string
 @secure()
 param agentToolsApiKey string
@@ -35,8 +40,8 @@ resource modelDeployment 'Microsoft.CognitiveServices/accounts/deployments@2026-
   properties: {
     model: {
       format: 'OpenAI'
-      name: 'gpt-5-mini'
-      version: '2025-08-07'
+      name: modelName
+      version: modelVersion
     }
   }
 }

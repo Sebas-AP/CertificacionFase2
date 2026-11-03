@@ -25,8 +25,11 @@ public sealed class AzureInvoiceBlobStore(
             await container.CreateIfNotExistsAsync(
                 publicAccessType: PublicAccessType.None,
                 cancellationToken: cancellationToken);
+            // El SDK devuelve PublicAccessType.None (no null) para un contenedor privado
+            // cuando el header x-ms-blob-public-access está ausente; solo BlobContainer/Blob
+            // representan acceso público real.
             var properties = await container.GetPropertiesAsync(cancellationToken: cancellationToken);
-            if (properties.Value.PublicAccess is not null)
+            if (properties.Value.PublicAccess is PublicAccessType.Blob or PublicAccessType.BlobContainer)
             {
                 throw new InvoiceDependencyException("blob_storage", "blob_container_must_be_private");
             }

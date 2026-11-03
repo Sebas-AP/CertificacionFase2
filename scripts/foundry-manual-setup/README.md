@@ -46,6 +46,30 @@ nombre + versión). La salida imprime los números de versión creados — cópi
 los app settings del backend (`Foundry__BusinessAgentVersion`,
 `Foundry__InvoiceAgentVersion`).
 
+## Región
+
+Despliega la cuenta Foundry (`infra/foundry-manual.bicep`) en la **misma región**
+que el App Service del backend. La llamada que Foundry hace a la herramienta
+OpenAPI (`AGENT_TOOLS_BASE_URL`) es sensible a la latencia entre regiones; en
+pruebas, tenerlas en regiones distintas (Foundry en `centralus`, backend en
+`canadacentral`) causó fallos intermitentes (`chat_provider_unavailable` o una
+respuesta con el texto `(remote call in progress)`) en la mayoría de las
+consultas que requerían invocar la herramienta.
+
+## Inestabilidad conocida de la herramienta OpenAPI
+
+Incluso con Foundry y el backend en la misma región, la invocación de la
+herramienta OpenAPI vía conexión de proyecto (`OpenApiProjectConnectionAuthenticationDetails`)
+sigue siendo intermitente a 2026-11-03: un chat sin necesidad de herramienta
+(saludo, pregunta general) responde bien de forma consistente, pero una
+consulta que requiere llamar la herramienta (facturas, inventario) falla una
+parte significativa de las veces con `chat_provider_unavailable`, sin relación
+aparente con la versión del agente ni con qué operación específica se invoca.
+Esto se comportó igual en dos regiones distintas y con dos proyectos Foundry
+distintos, por lo que parece una limitación de la plataforma (la función es
+muy nueva) y no algo corregible desde este repositorio. Si Microsoft la
+estabiliza, debería dejar de ser necesario mencionar esto aquí.
+
 ## Revisar si el bug de azd ya se corrigió
 
 ```bash
