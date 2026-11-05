@@ -1,9 +1,7 @@
-
 ---
 
 
 ---
-
 # Rol: Arquitecto
 
 [](https://github.com/josejesusguzman/proyecto-fase2-ai901/blob/main/.github/agents/arquitecto.agent.md#rol-arquitecto)
