@@ -1,0 +1,317 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { AppShell } from "@/components/AppShell";
+import { getInvoices, getReport } from "@/lib/api";
+import type { Invoice, ManagementReport } from "@/lib/contracts";
+
+type IconProps = { size?: number; stroke?: number; className?: string };
+
+function IconCalendar({ size = 16, stroke = 1.5, className }: IconProps) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 11h18" /></svg>;
+}
+
+function IconCircleCheck({ size = 16, stroke = 1.5, className }: IconProps) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="m8 12 2.5 2.5L16 9" /></svg>;
+}
+
+function IconClock({ size = 16, stroke = 1.5, className }: IconProps) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>;
+}
+
+function IconPackage({ size = 16, stroke = 1.5, className }: IconProps) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true"><path d="m12 3 9 5-9 5-9-5 9-5Z" /><path d="M3 8v9l9 5 9-5V8M12 13v9" /></svg>;
+}
+
+function IconPlus({ size = 16, stroke = 1.5, className }: IconProps) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>;
+}
+
+function IconWallet({ size = 16, stroke = 1.5, className }: IconProps) {
+  return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round" className={className} aria-hidden="true"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4H20v16H6a3 3 0 0 1-3-3V6.5A2.5 2.5 0 0 1 5.5 4" /><path d="M3 8h17M16 14h.01" /><path d="M17 11h3v6h-3a3 3 0 0 1 0-6Z" /></svg>;
+}
+
+function IconFileText({ size = 16, stroke = 1.5, className }: { size?: number; stroke?: number; className?: string }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={stroke}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+      <path d="M5 8V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2h-7" />
+      <path d="M3 15h6" />
+      <path d="M6 12v6" />
+    </svg>
+  );
+}
+
+function PanelHeading({ title, sub, link, to }: { title: string; sub?: string; link: string; to: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 self-stretch">
+      <div className="flex flex-col gap-1">
+        <div className="text-ui-md font-semibold text-brand-slate-dark">{title}</div>
+        {sub && <div className="text-ui-xs text-brand-slate-medium">{sub}</div>}
+      </div>
+      <Link href={to} className="text-ui-xs font-semibold text-brand-action hover:underline">
+        {link}
+      </Link>
+    </div>
+  );
+}
+
+export default function DashboardPage() {
+  const [loading, setLoading] = useState(true);
+  const [report, setReport] = useState<ManagementReport | null>(null);
+  const [recentInvoices, setRecentInvoices] = useState<Invoice[]>([]);
+
+  useEffect(() => {
+    async function loadDashboardData() {
+      try {
+        setLoading(true);
+        const now = new Date();
+        const firstDayMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+        const reportData = await getReport(firstDayMonth, now.toISOString());
+        setReport(reportData);
+        const invoicePage = await getInvoices(1, "");
+        setRecentInvoices(invoicePage.items.slice(0, 3));
+      } catch (error) {
+        console.error("Error loading dashboard data:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadDashboardData();
+  }, []);
+
+  if (loading) {
+    return (
+      <AppShell crumb="Cargando">
+        <div className="flex h-full items-center justify-center">
+          <div className="text-ui-sm text-brand-slate-medium">Cargando datos del negocio...</div>
+        </div>
+      </AppShell>
+    );
+  }
+
+  const totalApproved = report?.approvedTotalsByCurrency[0]?.totalAmount ?? 0;
+  const currency = report?.approvedTotalsByCurrency[0]?.currencyCode ?? "€";
+
+  const METRICS = [
+    {
+      label: "Total Aprobado (Mes)",
+      value: `${totalApproved.toLocaleString()} ${currency}`,
+      note: "Suma de todas las facturas confirmadas",
+      noteColor: "text-[#13856A]",
+      icon: IconWallet
+    },
+    {
+      label: "Facturas Procesadas",
+      value: report?.processedInvoiceCount.toString() ?? "0",
+      note: "Documentos analizados por la IA",
+      noteColor: "text-[#13856A]",
+      icon: IconCircleCheck
+    },
+    {
+      label: "Duplicados Detectados",
+      value: report?.duplicateInvoiceCount.toString() ?? "0",
+      note: `${report?.duplicateRate.toFixed(1)}% de tasa de duplicidad`,
+      noteColor: "text-brand-slate-medium",
+      icon: IconClock
+    },
+    {
+      label: "Alertas Inventario",
+      value: report?.criticalInventoryItemCount.toString() ?? "0",
+      note: "Productos con stock crítico",
+      noteColor: "text-[#CF4F57]",
+      icon: IconPackage
+    },
+  ];
+
+  return (
+    <AppShell crumb="Inicio">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="text-heading-lg font-semibold leading-relaxed text-brand-slate-dark">
+          Bienvenido, Tristan Galindo Piedra
+        </h1>
+        <div className="flex gap-2.5">
+          <button className="flex h-[42px] items-center gap-2 rounded-control border border-brand-slate-light bg-white px-4 text-ui-sm font-semibold text-brand-slate-dark">
+            <IconCalendar size={16} stroke={1.5} className="text-brand-slate-medium" />
+            {new Date().toLocaleString('default', { month: 'long', year: 'numeric' })}
+          </button>
+          <Link href="/facturas/nueva" className="flex h-[42px] items-center gap-2 rounded-control border border-brand-action bg-brand-action px-4 text-ui-sm font-semibold text-white hover:bg-blue-700 transition-colors">
+            <IconPlus size={16} stroke={1.5} />
+            Nueva factura
+          </Link>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {METRICS.map(({ label, value, note, noteColor, icon: Icon }) => (
+          <div key={label} className="rounded-tile border border-brand-slate-light bg-white flex flex-col gap-3.5 p-5 panel-shadow">
+            <div className="flex items-start justify-between">
+              <span className="text-ui-xs text-brand-slate-medium">{label}</span>
+              <Icon size={18} stroke={1.5} className="text-brand-action" />
+            </div>
+            <div className="text-[28px] font-semibold leading-relaxed text-brand-slate-dark">{value}</div>
+            <div className={`text-ui-xs ${noteColor}`}>{note}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,760fr)_minmax(0,1fr)]">
+        <div className="rounded-xl border border-brand-slate-light bg-white flex flex-col gap-[22px] p-6 panel-shadow">
+          <PanelHeading
+            title="Evolución de ingresos"
+            sub="Facturación acumulada · Actual"
+            link="Ver reporte →"
+            to="/reportes"
+          />
+          <div className="flex gap-5 text-ui-xs text-brand-slate-medium">
+            <span className="flex items-center gap-[7px]">
+              <span className="size-2 rounded-[2px] bg-brand-action" /> Este mes
+            </span>
+            <span className="flex items-center gap-[7px]">
+              <span className="size-2 rounded-[2px] bg-[#B9C8E2]" /> Mes anterior
+            </span>
+          </div>
+          <div className="flex flex-col gap-3">
+            <div className="flex h-[190px] gap-3">
+              <div className="flex w-[38px] flex-col justify-between text-ui-xs text-brand-slate-medium">
+                {AXIS.map((a) => (
+                  <span key={a}>{a}</span>
+                ))}
+              </div>
+              <div className="relative flex-1">
+                <div className="absolute inset-0 flex flex-col justify-between">
+                  {AXIS.map((a) => (
+                    <div key={a} className="h-px bg-brand-slate-light" />
+                  ))}
+                </div>
+                <svg
+                  className="absolute inset-0 size-full"
+                  viewBox="0 0 662 184"
+                  preserveAspectRatio="none"
+                  fill="none"
+                >
+                  <defs>
+                    <linearGradient id="rev" x1="0" y1="0" x2="0" y2="183.35" gradientUnits="userSpaceOnUse">
+                      <stop stopColor="#2463EB" stopOpacity="0.14" />
+                      <stop offset="1" stopColor="#2463EB" stopOpacity="0" />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d="M0 183.35C41.2393 181.683 48.8361 161.681 92.2459 153.347C135.656 145.013 162.787 147.513 206.197 125.011C249.607 102.509 282.164 120.844 325.574 101.676C368.984 82.5075 390.689 94.1752 434.098 71.6732C477.508 49.1711 510.066 61.6723 553.475 41.6705C596.885 21.6686 613.164 26.6691 662 0V183.35H0Z"
+                    fill="url(#rev)"
+                  />
+                  <path
+                    d="M0 183.35C41.2393 181.683 48.8361 161.681 92.2459 153.347C135.656 145.013 162.787 147.513 206.197 125.011C249.607 102.509 282.164 120.844 325.574 101.676C368.984 82.5075 390.689 94.1752 434.098 71.6732C477.508 49.1711 510.066 61.6723 553.475 41.6705C596.885 21.6686 613.164 26.6691 662 0"
+                    stroke="#2463EB"
+                    strokeWidth="3"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                  <path
+                    d="M0 183 C41 181 48 170 92 160 C135 150 162 155 206 140 C249 125 282 130 325 118 C368 106 390 108 434 95 C477 82 510 78 553 62 C596 46 613 30 662 21"
+                    stroke="#B9C8E2"
+                    strokeWidth="2"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                </svg>
+              </div>
+            </div>
+            <div className="flex justify-between pl-[50px] text-ui-xs text-brand-slate-medium">
+              {DATES.map((d) => (
+                <span key={d}>{d}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-brand-slate-light bg-white flex flex-col gap-[15px] p-6 panel-shadow">
+          <div className="flex flex-col gap-1">
+            <div className="text-ui-md font-semibold text-brand-slate-dark">Tu atención hoy</div>
+            <div className="text-ui-xs text-brand-slate-medium">Tareas pendientes de revisión</div>
+          </div>
+          {recentInvoices.length === 0 ? (
+            <div className="text-ui-xs text-brand-slate-medium">No hay facturas pendientes hoy.</div>
+          ) : (
+            recentInvoices.map((inv) => (
+              <div key={inv.id} className="flex items-start gap-3 py-2">
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-background">
+                  <IconFileText size={16} stroke={1.5} className="text-brand-action" />
+                </div>
+                <div className="flex flex-1 flex-col gap-1">
+                  <div className="text-ui-xs font-semibold text-brand-slate-dark">
+                    {inv.supplierName || "Factura sin nombre"}
+                  </div>
+                  <div className="text-ui-xs text-brand-slate-medium">
+                    {inv.status === "Pending" ? "Pendiente de revisión" : "Procesada correctamente"}
+                  </div>
+                  <Link href={`/facturas/${inv.id}`} className="text-ui-xs font-semibold text-brand-action hover:underline">
+                    Revisar factura →
+                  </Link>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,760fr)_minmax(0,1fr)]">
+        <div className="rounded-xl border border-brand-slate-light bg-white flex flex-col gap-3.5 p-5 panel-shadow">
+          <PanelHeading title="Últimas facturas" link="Ver todas →" to="/facturas" />
+          <div className="overflow-x-auto">
+            <div className="min-w-[560px]">
+              <div className="flex h-[42px] items-center bg-[#FAFBFD] px-4 text-ui-xs font-semibold text-brand-slate-medium">
+                <div className="w-[300px]">Factura / cliente</div>
+                <div className="w-[130px]">Fecha</div>
+                <div className="w-[110px]">Importe</div>
+                <div className="flex-1">Estado</div>
+              </div>
+              {recentInvoices.map((inv) => (
+                <div key={inv.id} className="flex h-[62px] items-center border-b border-brand-slate-light px-4 text-ui-xs">
+                  <div className="w-[300px] font-semibold text-brand-slate-dark">
+                    {inv.invoiceNumber || "S/N"} · {inv.supplierName || "Desconocido"}
+                  </div>
+                  <div className="w-[130px] text-brand-slate-medium">{inv.issueDate ? new Date(inv.issueDate).toLocaleDateString() : "N/A"}</div>
+                  <div className="w-[110px] text-brand-slate-medium">{inv.total ? `${inv.total} ${inv.currencyLCode || '€'}` : "0 €"}</div>
+                  <div className="flex-1">
+                    <span
+                      className={`inline-block rounded-md px-[9px] py-1 text-ui-xs font-semibold ${
+                        inv.status === "Approved" ? "bg-[#E8F7F0] text-[#13856A]" : "bg-[#FFF5DD] text-[#A86A0B]"
+                      }`}
+                    >
+                      {inv.status === "Approved" ? "Pagada" : "Pendiente"}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-brand-slate-light bg-white flex flex-col gap-4 p-5 panel-shadow">
+          <PanelHeading title="Estado del Sistema" link="Ver salud" to="/chat" />
+          <div className="flex flex-col gap-3">
+             <div className="flex items-start gap-2.5">
+              <IconCircleCheck size={17} stroke={1.5} className="shrink-0 text-brand-action" />
+              <div className="flex flex-1 flex-col gap-0.5">
+                <div className="text-ui-xs font-semibold text-brand-slate-dark">API Operativa</div>
+                <div className="text-ui-xs text-brand-slate-medium">Conectado a RioClaro.Api</div>
+                <div className="text-ui-xs text-brand-slate-medium">Actualizado ahora</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </AppShell>
+  );
+}

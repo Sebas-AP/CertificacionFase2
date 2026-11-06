@@ -140,18 +140,29 @@ export async function apiRequest<T>(
     headers.set("Content-Type", "application/json");
   }
 
-  const response = await fetch(`${apiBaseUrl()}${path}`, {
-    ...init,
-    headers,
-    cache: "no-store",
-  });
+  try {
+    const response = await fetch(`${apiBaseUrl()}${path}`, {
+      ...init,
+      headers,
+      cache: "no-store",
+    });
 
-  if (!response.ok) {
-    throw parseApiError(response.status, await readProblem(response));
+    if (!response.ok) {
+      throw parseApiError(response.status, await readProblem(response));
+    }
+
+    if (response.status === 204) return undefined as T;
+    return (await response.json()) as T;
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+
+    // Si es un TypeError (Failed to fetch), significa que el servidor está apagado o la URL es incorrecta
+    throw new ApiError(
+      "No se pudo establecer conexión con el servidor. Asegúrate de que el backend esté encendido y el puerto sea correcto.",
+      503,
+      "server_unreachable"
+    );
   }
-
-  if (response.status === 204) return undefined as T;
-  return (await response.json()) as T;
 }
 
 export function getReport(
